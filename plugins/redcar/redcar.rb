@@ -672,8 +672,10 @@ module Redcar
     end
     
     class ShowTheme < Command
-      def execute
-        
+      def execute(options)
+        if options[:value]
+          Redcar::EditView.theme=options[:value]
+        end        
       end
     end
     
@@ -883,6 +885,11 @@ module Redcar
             item "Font", SelectNewFont
             item "Font Size", SelectFontSize
             item "Theme", SelectTheme
+            sub_menu "All Themes" do
+              EditView.themes.sort.each do |theme|
+                item theme, :command => ShowTheme, :value => theme, :type => :radio, :active => (theme == EditView.theme)
+              end
+            end
           end
           separator
           item "New Notebook", NewNotebookCommand
