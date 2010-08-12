@@ -56,6 +56,10 @@ module Redcar
       mate_text.add_grammar_listener do |new_grammar|
         @model.set_grammar(new_grammar)
       end
+      @target = Swt::DND::DropTarget.new(@mate_text.get_text_widget, Swt::DND::DND::DROP_MOVE | Swt::DND::DND::DROP_COPY)
+      @types = [Swt::DND::FileTransfer.getInstance()].to_java(:"org.eclipse.swt.dnd.FileTransfer")
+      @target.setTransfer(@types)
+      @target.addDropListener(DragTargetListener.new)
     end
     
     def create_mate_text
@@ -180,7 +184,34 @@ module Redcar
         end
       end
     end
-    
+   
+    class DragTargetListener
+
+      def dragEnter(event)
+      end
+     
+      def dragOver(event)
+      end 
+      
+      def dragLeave(event)
+      end
+
+      def dragOperationChanged(event); end
+
+      def dropAccept(event)
+	if not Swt::DND::FileTransfer.getInstance.isSupportedType(event.currentDataType) 
+	 event.detail = Swt::DND::DND::DROP_NONE
+        end
+      end
+
+      def drop(event)
+	event.data.each do |name|
+	  Project::FileOpenInCurrentCommand.new(name.to_s).run
+	end
+      end
+
+    end
+ 
     class KeyListener
       def initialize(edit_view_swt)
         @edit_view_swt = edit_view_swt
