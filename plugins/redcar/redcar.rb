@@ -694,14 +694,6 @@ module Redcar
       end
     end
    
-    class ShowTheme < Command
-      def execute(options)
-        if options[:value]
-          Redcar::EditView.theme=options[:value]
-        end
-      end
-    end
- 
     class SelectFontSize < Command
       def execute
         result = Application::Dialog.input("Font Size", "Please enter new font size", Redcar::EditView.font_size.to_s) do |text|
@@ -937,11 +929,6 @@ module Redcar
             item "Font", SelectNewFont
             item "Font Size", SelectFontSize
             item "Theme", SelectTheme
-            sub_menu "All Themes" do
-              EditView.themes.sort.each do |theme|
-                item theme, :command => ShowTheme, :value => theme, :type => :radio, :active => (theme == EditView.theme)
-              end
-            end
           end
           separator
           item "New Notebook", NewNotebookCommand
