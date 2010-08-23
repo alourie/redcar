@@ -20,13 +20,12 @@ module Redcar
     end
     
     def self.load_textmate_assets
-      s = Time.now
       load_textmate_assets_from_dir(Redcar.root + "/plugins/textmate/vendor/redcar-bundles")
       Redcar.plugin_manager.loaded_plugins.each do |plugin|
         load_textmate_assets_from_dir(File.dirname(plugin.definition_file) + "/")
       end
       load_textmate_assets_from_dir(Redcar.user_dir + "/")
-      puts "took #{Time.now - s}s to load textmate assets"
+      
       EditView.themes.unshift(*JavaMateView::ThemeManager.themes.to_a.map {|th| th.name })
     end
     
@@ -44,8 +43,8 @@ module Redcar
       @handlers = []
       create_mate_text
       create_document
-      Redcar.plugin_manager.objects_implementing(:edit_view_gui_update).each do |object|
-        object.edit_view_gui_update(@mate_text)
+      Redcar.plugin_manager.objects_implementing(:styledText_update).each do |object|
+        @cursor = object.styledText_update(@mate_text)
       end
       attach_listeners
       @mate_text.set_grammar_by_name("Plain Text")
@@ -57,6 +56,10 @@ module Redcar
       mate_text.add_grammar_listener do |new_grammar|
         @model.set_grammar(new_grammar)
       end
+      @target = Swt::DND::DropTarget.new(@mate_text.get_text_widget, Swt::DND::DND::DROP_MOVE | Swt::DND::DND::DROP_COPY)
+      @types = [Swt::DND::FileTransfer.getInstance()].to_java(:"org.eclipse.swt.dnd.FileTransfer")
+      @target.setTransfer(@types)
+      @target.addDropListener(DragTargetListener.new)
     end
     
     def create_mate_text
@@ -181,7 +184,35 @@ module Redcar
         end
       end
     end
-    
+   
+    class DragTargetListener
+
+      def dragEnter(event)
+        event.detail = Swt::DND::DND::DROP_COPY
+      end
+     
+      def dragOver(event); end 
+      
+      def dragLeave(event)
+        event.detail = Swt::DND::DND::DROP_NONE
+      end
+
+      def dragOperationChanged(event); end
+
+      def dropAccept(event)
+	if not Swt::DND::FileTransfer.getInstance.isSupportedType(event.currentDataType) 
+	 event.detail = Swt::DND::DND::DROP_NONE
+        end
+      end
+
+      def drop(event)
+	event.data.each do |name|
+	  Project::FileOpenInCurrentCommand.new(name.to_s).run
+	end
+      end
+
+    end
+ 
     class KeyListener
       def initialize(edit_view_swt)
         @edit_view_swt = edit_view_swt

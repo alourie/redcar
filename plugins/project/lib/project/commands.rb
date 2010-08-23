@@ -8,6 +8,34 @@ module Redcar
   end
 
   class Project
+
+    class FileOpenInCurrentCommand < Command
+      def initialize(path = nil, adapter = Adapters::Local.new)
+        @path = path
+        @adapter = adapter
+      end
+
+      def execute
+        path = get_path
+        if path
+	  win = Redcar.app.focussed_window || Redcar.app.new_window
+          Manager.open_file_in_window(path, win, @adapter)
+        end
+      end
+
+      private
+
+      def get_path
+        @path || begin
+          if path = Application::Dialog.open_file(:filter_path => Manager.filter_path)
+            Manager.storage['last_dir'] = File.dirname(File.expand_path(path))
+            path
+          end
+        end
+      end
+    end
+
+
     class FileOpenCommand < Command
       def initialize(path = nil, adapter = Adapters::Local.new)
         @path = path
@@ -133,18 +161,18 @@ module Redcar
       end
     end
     
-    #class OpenRemoteCommand < Command
-    #  def initialize(url=nil)
-    #    @url = url
-    #  end
-    #  
-    #  def execute
-    #    unless @url
-    #      @speedbar = OpenRemoteSpeedbar.new
-    #      win.open_speedbar(@speedbar)
-    #    end
-    #  end
-    #end
+    class OpenRemoteCommand < Command
+      def initialize(url=nil)
+        @url = url
+      end
+      
+      def execute
+        unless @url
+          @speedbar = OpenRemoteSpeedbar.new
+          win.open_speedbar(@speedbar)
+        end
+      end
+    end
     
     class FileSaveCommand < EditTabCommand
       def initialize(tab=nil)
@@ -233,10 +261,6 @@ module Redcar
     class FindFileCommand < ProjectCommand
      
       def execute
-        if Manager.focussed_project.remote?
-          Application::Dialog.message_box("Find file doesn't work in remote projects yet :(")
-          return
-        end
         dialog = FindFileDialog.new(Manager.focussed_project)
         dialog.open
       end
