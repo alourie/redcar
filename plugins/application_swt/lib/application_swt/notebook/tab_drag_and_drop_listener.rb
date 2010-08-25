@@ -47,6 +47,12 @@ module Redcar
           end
         end
         
+        def dragSetData(event)
+          if TabTransfer.getInstance.isSupportedType(event.currentDataType)
+            puts "Set DATA here"            
+          end
+        end
+        
         # DragSourceListener interface implementation
         # When a drag finishes, the dragged tab is unmarked and released
         def dragFinished(event)

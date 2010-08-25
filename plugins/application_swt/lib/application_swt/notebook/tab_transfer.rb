@@ -7,6 +7,7 @@ module Redcar
           # Empty class for now, until we figure out which 
           # information we want to attach to the transfer.
           # This _will_ be needed to DnD tabs between windows
+	        attr_accessor :fileName
         end
       	
         TAB_TYPE = "TabType"
@@ -25,7 +26,7 @@ module Redcar
             out = java.io.ByteArrayOutputStream.new
             write_out = java.io.DataOutputStream.new(out)
             types.length.times do |i|
-              buffer = TAB_TYPE.to_java_bytes
+              buffer = i.fileName.to_java_bytes
               write_out.write_int(buffer.length)
               write_out.write(buffer)
             end
@@ -50,7 +51,7 @@ module Redcar
                 int size = read_in.read_int
                 name = Java::byte[size].new
                 read_in.read(name)
-                tab_type_name = String.from_java_bytes(name);
+                datum.fileName = String.from_java_bytes(name);
                 data << datum
               end
               read_in.close
